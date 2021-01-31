@@ -1,5 +1,7 @@
+<!DOCTYPE html>
 <html>
-
+<head>
+<title>Assignment van Edwin Spaan voor bit-academy jan 2021</title>
 <script>
 const bordBewegingen = {
     1:[0,0,7,6],
@@ -60,7 +62,7 @@ const bordBewegingen = {
    47:[41,42,0,0],
    48:[42,43,0,0],
    49:[43,44,0,0],
-   50:[45,0,0,0]
+   50:[44,45,0,0]
 }
 
 
@@ -109,6 +111,8 @@ class Stand {
       this.beurt = ''
       this.mogelijkeZetten = [];
       this.naZetNummer = 0;
+      this.winnaar = '';
+      this.klaar = false;
   }
 
   init() {
@@ -145,16 +149,30 @@ class Stand {
     // Controleer op halen van dam
     // sta je als wit of zwart normale steen op eindlijn dan wordt het nu een dam
 
-    // Controleer of het einde spel is
-
-
     // zet naZetnummer omhoog
     this.naZetNummer++;
-    // zet beurt naar de ander
-    this.beurt = tegenKleur[this.beurt];
     this.scoreWit = 20 - Object.keys(this.zwart).length;
     this.scoreZwart = 20 - Object.keys(this.wit).length;
-    this.mogelijkeZetten = this.getMogelijkeZetten();
+
+    // Controleer of het einde spel is
+
+    if (Object.keys(this.zwart).length === 0) {
+      this.winnaar = 'wit';
+      this.klaar = true;
+    }
+    if (Object.keys(this.wit).length === 0) {
+      this.winnaar = 'zwart';
+      this.klaar = true;
+    }
+
+    if (!this.klaar) {
+      // zet beurt naar de ander
+      this.beurt = tegenKleur[this.beurt];
+      this.mogelijkeZetten = this.getMogelijkeZetten();
+    } else {
+      this.beurt = '';
+      this.mogelijkeZetten = [];
+    }
   }
   
   getMogelijkeZetten() {
@@ -270,9 +288,14 @@ class Bord {
         document.getElementById('veld'+i).innerHTML = `<sup>${i}</sup>`;
       }
     }
-    document.getElementById('beurt').innerHTML = stand.beurt.charAt(0).toUpperCase() + stand.beurt.slice(1);
     document.getElementById('scorewit').innerHTML = 'Wit: '+ stand.scoreWit;
     document.getElementById('scorezwart').innerHTML = 'Zwart: '+ stand.scoreZwart;
+    if (stand.klaar) {
+      document.getElementById('beurt').innerHTML = stand.winnaar.charAt(0).toUpperCase() +  stand.winnaar.slice(1) + ' heeft gewonnen.';
+    } else {
+      document.getElementById('beurt').innerHTML = stand.beurt.charAt(0).toUpperCase() + stand.beurt.slice(1) + ' is aan zet.';
+    }
+
   }
 
   highlight(veld,type) {
@@ -357,14 +380,14 @@ class Damspel {
       }
 
     }
-    // geen bubling
+    // geen event bubling
     return false;
   }
 
   zetUitvoeren(zet) {
     this.stand.zetUitvoeren(zet);
     this.bord.redraw(this.stand);
-  } 
+  }
 
 };
 
@@ -386,6 +409,8 @@ const game = new Damspel();
       width: 100%;
       height: 23px;
       border-bottom: 2px solid salmon;
+      text-align: center;
+      color: salmon;
     }
 
     #footer {
@@ -469,9 +494,10 @@ const game = new Damspel();
     }
 </style>
 
+</head>
+
 <body onload="game.init();">
-<div id="header">
-</div>
+<div id="header">Dammen</div>
 
 <div id="hetspel">
     <div id="linkerkolom">
@@ -601,13 +627,16 @@ const game = new Damspel();
     </div>
     <div id="rechterkolom">
         <div id="stand">
-          <span id="beurt"></span> is aan zet<br/>
+          <span id="beurt"></span><br/>
           <div id="scorewit"></div><div id="scorezwart"></div>
         </div>
         <div id="besturing">
             Ga met de muis over de stenen om te zien welke zet ze kunnen doen.<br/>
             Klik op een steen die je wilt zetten. De vakjes waar je heen kan met die steen worden groen. klik op een van die vakjes om de zet uit te voeren.<br/><br/>
-            <input type="button" value="Reset spel" name="buuton" onclick="game.reset();">
+            <br/>
+            Dam halen, einde spel en via een andere weg naar zelfde plek bij dubbelslag zijn (nog) niet geimplementeerd.
+            <br/>
+            <input type="button" value="Reset spel" name="resetbutton" onclick="game.reset();">
         </div>
     </div>
 </div>
