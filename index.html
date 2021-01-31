@@ -94,7 +94,7 @@ class DamSteenZet {
     this.nummer = nummer ? nummer : undefined;
     this.kleur = kleur ? kleur : undefined;
     this.van = van ?  van : undefined; // Start vakje
-    this.via = via ? via : []; // Tussenstapjes array
+    this.via = via ? via : []; // Tussenstapjes array incl. stat
     this.naar = naar ? naar : undefined; // Eind vakje
     this.geslagen = geslagen ? geslagen : []; // Array van geslagen stenen;
   }
@@ -154,8 +154,7 @@ class Stand {
     this.scoreWit = 20 - Object.keys(this.zwart).length;
     this.scoreZwart = 20 - Object.keys(this.wit).length;
 
-    // Controleer of het einde spel is
-
+    // Controleer of het einde spel is omdat er geen stenen meer zijn
     if (Object.keys(this.zwart).length === 0) {
       this.winnaar = 'wit';
       this.klaar = true;
@@ -169,6 +168,11 @@ class Stand {
       // zet beurt naar de ander
       this.beurt = tegenKleur[this.beurt];
       this.mogelijkeZetten = this.getMogelijkeZetten();
+      if ( this.mogelijkeZetten.length === 0 ){
+        // Controleer of het einde spel is omdat er geen zetten mogelijk zijn
+        this.winnaar = tegenKleur[this.beurt];
+        this.klaar = true;
+      }
     } else {
       this.beurt = '';
       this.mogelijkeZetten = [];
@@ -279,9 +283,11 @@ class Bord {
       this.highlight(i,'geen');
       if ( stand.zwart[i] ) {
       // zwarte steen ?
+      // todo: als Dam type ander symbool
         document.getElementById('veld'+i).innerHTML = `<sup>${i}</sup><span alt="zwart" onmouseout="game.verbergMogelijkeZetten(${i});" onmouseover="game.toonMogelijkeZetten(${i});">&#9679;</span>`;
       } else if ( stand.wit[i] ) {
       // witte steen ?
+      // todo: als Dam type ander symbool
         document.getElementById('veld'+i).innerHTML = `<sup>${i}</sup><span alt="wit" onmouseout="game.verbergMogelijkeZetten(${i});" onmouseover="game.toonMogelijkeZetten(${i});">&#9675;</span>`;
       } else {
       // leeg ?
@@ -376,7 +382,7 @@ class Damspel {
         this.zetUitvoeren(mogelijkeGevondenZetten[0]);
         this.clickStatus = 0;
         // als er meer zijn dan ...
-        // of de via vakjes doen
+        // of het allemaal via de via vakjes doen?
       }
 
     }
