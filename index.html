@@ -104,35 +104,35 @@ class DamSteenZet {
 
 class Stand {
   constructor() {
-      this.zwart ={}; 
-      this.wit ={};
-      this.scoreWit = 0;
-      this.scoreZwart = 0;
-      this.beurt = ''
-      this.mogelijkeZetten = [];
-      this.naZetNummer = 0;
-      this.winnaar = '';
-      this.klaar = false;
+    this.zwart ={}; 
+    this.wit ={};
+    this.scoreWit = 0;
+    this.scoreZwart = 0;
+    this.beurt = ''
+    this.mogelijkeZetten = [];
+    this.naZetNummer = 0;
+    this.winnaar = '';
+    this.klaar = false;
   }
 
   init() {
-      this.zwart ={}; 
-      this.wit ={};
-      // Zet stenen op start vakjes
-      // zwart :
-      for (let i=1; i <= 20; i++) {
-          this.zwart[i] = new DamSteen('zwart', i, 'normaal');
-      }
-      // wit :
-      for (let i=31; i <= 50; i++) {
-          this.wit[i] = new DamSteen('wit', i, 'normaal');
-      }
-      // reset de score
-      this.scoreWit = 0;
-      this.scoreZwart = 0;
-      this.naZetNummer = 0;
-      this.beurt = 'wit'
-      this.mogelijkeZetten = this.getMogelijkeZetten();
+    this.zwart ={}; 
+    this.wit ={};
+    // Zet stenen op start vakjes
+    // zwart :
+    for (let i=1; i <= 20; i++) {
+        this.zwart[i] = new DamSteen('zwart', i, 'normaal');
+    }
+    // wit :
+    for (let i=31; i <= 50; i++) {
+        this.wit[i] = new DamSteen('wit', i, 'normaal');
+    }
+    // reset de score
+    this.scoreWit = 0;
+    this.scoreZwart = 0;
+    this.naZetNummer = 0;
+    this.beurt = 'wit'
+    this.mogelijkeZetten = this.getMogelijkeZetten();
   }
 
   zetUitvoeren(zet) {
@@ -274,10 +274,6 @@ class Stand {
 }
 
 class Bord {
-  constructor() {
-    this.bordBewegingen = bordBewegingen;
-  }
-
   redraw(stand) {
     for( let i = 1; i <= 50; i++){
       this.highlight(i,'geen');
