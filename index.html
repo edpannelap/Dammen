@@ -65,10 +65,9 @@ const bordBewegingen = {
    50:[44,45,0,0]
 }
 
-
 const tegenKleur = {
-  wit:'zwart',
-  zwart:'wit'
+  wit: 'zwart',
+  zwart: 'wit'
 }
 
 const highlightKleur = {
@@ -76,17 +75,17 @@ const highlightKleur = {
   naar: 'lawngreen',
   via: 'lightyellow',
   geslagen: 'salmon',
-  geen : 'lightgrey',
-  click : 'lawngreen'
+  geen: 'lightgrey',
+  click: 'lawngreen'
 }
 
 class DamSteen {
-    constructor(kleur,positie,type) {
-        this.kleur = kleur ? kleur : undefined;
-        this.positie = positie ? positie : undefined;
-        this.type = type ? type : undefined;
-        this.mogelijkeZetten = [];
-    }
+  constructor(kleur,positie,type) {
+      this.kleur = kleur ? kleur : undefined;
+      this.positie = positie ? positie : undefined;
+      this.type = type ? type : undefined;
+      this.mogelijkeZetten = [];
+  }
 }
 
 class DamSteenZet {
@@ -94,7 +93,7 @@ class DamSteenZet {
     this.nummer = nummer ? nummer : undefined;
     this.kleur = kleur ? kleur : undefined;
     this.van = van ?  van : undefined; // Start vakje
-    this.via = via ? via : []; // Tussenstapjes array incl. stat
+    this.via = via ? via : []; // Tussenstapjes array incl. start
     this.naar = naar ? naar : undefined; // Eind vakje
     this.geslagen = geslagen ? geslagen : []; // Array van geslagen stenen;
   }
@@ -306,7 +305,6 @@ class Bord {
 
 }
 
-
 class Damspel {
   constructor() {
       this.bord = new Bord();
@@ -392,7 +390,6 @@ class Damspel {
   }
 
 };
-
 
 const game = new Damspel();
 
@@ -489,6 +486,7 @@ const game = new Damspel();
       float: left;
       background-color: lightgrey;
     }
+
     .rij {
       border: 1px solid green;
       width: 520px;
@@ -634,9 +632,9 @@ const game = new Damspel();
         </div>
         <div id="besturing">
             Ga met de muis over de stenen om te zien welke zet ze kunnen doen.<br/>
-            Klik op een steen die je wilt zetten. De vakjes waar je heen kan met die steen worden groen. klik op een van die vakjes om de zet uit te voeren.<br/><br/>
+            Klik op een steen die je wilt zetten. De vakjes waar je heen kan met die steen worden groen. Klik op een van die vakjes om de zet uit te voeren.<br/>Klik op een ander zwart veld om je keuze ongedaan te maken.<br/>
             <br/>
-            Dam halen, einde spel en via een andere weg naar zelfde plek bij dubbelslag zijn (nog) niet geimplementeerd.
+            Een dam halen en via een andere weg naar zelfde plek bij dubbelslag zijn (nog) niet geimplementeerd.
             <br/>
             <input type="button" value="Reset spel" name="resetbutton" onclick="game.reset();">
         </div>
