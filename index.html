@@ -1,0 +1,619 @@
+<html>
+
+<script>
+const bordBewegingen = {
+    1:[0,0,7,6],
+    2:[0,0,8,7],
+    3:[0,0,9,8],
+    4:[0,0,10,9],
+    5:[0,0,0,10],
+
+    6:[0,1,11,0],
+    7:[1,2,12,11],
+    8:[2,3,13,12],
+    9:[3,4,13,14],
+   10:[4,5,15,14],
+
+   11:[6,7,17,16],
+   12:[7,8,18,17],
+   13:[8,9,19,18],
+   14:[9,10,20,19],
+   15:[10,0,0,20],
+
+   16:[0,11,21,0],
+   17:[11,12,22,21],
+   18:[12,13,23,22],
+   19:[13,14,24,23],
+   20:[14,15,25,24],
+
+   21:[16,17,27,26],
+   22:[17,18,28,27],
+   23:[18,19,29,28],
+   24:[19,20,30,29],
+   25:[20,0,0,30],
+
+   26:[0,21,31,0],
+   27:[21,22,32,31],
+   28:[22,23,33,32],
+   29:[23,24,34,33],
+   30:[24,25,35,34],
+
+   31:[26,27,37,36],
+   32:[27,28,38,37],
+   33:[28,29,39,38],
+   34:[29,30,40,39],
+   35:[30,0,0,40],
+
+   36:[0,31,41,0],
+   37:[31,32,42,41],
+   38:[32,33,43,42],
+   39:[33,34,44,43],
+   40:[34,35,45,44],
+
+   41:[36,37,47,46],
+   42:[37,38,48,47],
+   43:[38,39,49,48],
+   44:[39,40,50,49],
+   45:[40,0,0,50],
+
+   46:[0,41,0,0],
+   47:[41,42,0,0],
+   48:[42,43,0,0],
+   49:[43,44,0,0],
+   50:[45,0,0,0]
+}
+
+
+const tegenKleur = {
+  wit:'zwart',
+  zwart:'wit'
+}
+
+const highlightKleur = {
+  van: 'lightgreen',
+  naar: 'lawngreen',
+  via: 'lightyellow',
+  geslagen: 'salmon',
+  geen : 'lightgrey',
+  click : 'lawngreen'
+}
+
+class DamSteen {
+    constructor(kleur,positie,type) {
+        this.kleur = kleur ? kleur : undefined;
+        this.positie = positie ? positie : undefined;
+        this.type = type ? type : undefined;
+        this.mogelijkeZetten = [];
+    }
+}
+
+class DamSteenZet {
+  constructor(nummer, kleur, van, via, naar, geslagen) {
+    this.nummer = nummer ? nummer : undefined;
+    this.kleur = kleur ? kleur : undefined;
+    this.van = van ?  van : undefined; // Start vakje
+    this.via = via ? via : []; // Tussenstapjes array
+    this.naar = naar ? naar : undefined; // Eind vakje
+    this.geslagen = geslagen ? geslagen : []; // Array van geslagen stenen;
+  }
+
+}
+
+
+class Stand {
+  constructor() {
+      this.zwart ={}; 
+      this.wit ={};
+      this.scoreWit = 0;
+      this.scoreZwart = 0;
+      this.beurt = ''
+      this.mogelijkeZetten = [];
+      this.naZetNummer = 0;
+  }
+
+  init() {
+      this.zwart ={}; 
+      this.wit ={};
+      // Zet stenen op start vakjes
+      // zwart :
+      for (let i=1; i <= 20; i++) {
+          this.zwart[i] = new DamSteen('zwart', i, 'normaal');
+      }
+      // wit :
+      for (let i=31; i <= 50; i++) {
+          this.wit[i] = new DamSteen('wit', i, 'normaal');
+      }
+      // reset de score
+      this.scoreWit = 0;
+      this.scoreZwart = 0;
+      this.naZetNummer = 0;
+      this.beurt = 'wit'
+      this.mogelijkeZetten = this.getMogelijkeZetten();
+  }
+
+  zetUitvoeren(zet) {
+    // zet steen naar nieuwe lokatie
+    this[this.beurt][zet.naar] = this[this.beurt][zet.van];
+    this[this.beurt][zet.naar].positie = zet.naar;
+    delete this[this.beurt][zet.van];
+    // reset de mogelijke zetten van huidige speler
+    for (let id in this[this.beurt]) {
+      this[this.beurt][id].mogelijkeZetten = [];
+    };
+    // haal de geslagen stenen weg
+    zet.geslagen.forEach( geslagenOp => { delete this[tegenKleur[this.beurt]][geslagenOp] } );
+    // Controleer op halen van dam
+    // sta je als wit of zwart normale steen op eindlijn dan wordt het nu een dam
+
+    // Controleer of het einde spel is
+
+
+    // zet naZetnummer omhoog
+    this.naZetNummer++;
+    // zet beurt naar de ander
+    this.beurt = tegenKleur[this.beurt];
+    this.scoreWit = 20 - Object.keys(this.zwart).length;
+    this.scoreZwart = 20 - Object.keys(this.wit).length;
+    this.mogelijkeZetten = this.getMogelijkeZetten();
+  }
+  
+  getMogelijkeZetten() {
+    let mogelijkeZetten=[];
+    let ikMoetSlaanAantal = 0;
+    // Haal voor elke steen de mogelijke zetten op
+    // Slaan is verplicht
+    // Dubbel slag heeft prio
+
+    // object met alle stenen van degene die aan de beurt is
+    let stenen = this[this.beurt];
+    for (let id in stenen) {
+      const steen = stenen[id];
+      // kan ik naar voren ?
+      const linksVooruit = steen.kleur === 'wit' ? 0 : 2;
+      const rechtsVooruit = steen.kleur === 'wit' ? 1 : 3;
+      if (steen.type === 'normaal') {
+        // links naar voren
+        let naar = bordBewegingen[steen.positie][linksVooruit];
+        if ( naar != 0 && this.zwart[naar] === undefined && this.wit[naar] === undefined ) {
+          mogelijkeZetten.push ( new DamSteenZet(undefined, steen.kleur, steen.positie, [], naar, [] ) );
+        }
+        // rechts naar voren
+        naar = bordBewegingen[steen.positie][rechtsVooruit];
+        if ( naar != 0 && this.zwart[naar] === undefined && this.wit[naar] === undefined ) {
+          mogelijkeZetten.push ( new DamSteenZet(undefined, steen.kleur, steen.positie, [], naar, [] ) );
+        }
+      }
+
+      // kan ik slaan ?
+      const mogelijkeSlagZetten = this.getSlaanZetten(this.zwart, this.wit, this.beurt, steen.positie, steen.type, [], []);
+      mogelijkeZetten = mogelijkeZetten.concat(mogelijkeSlagZetten);
+    };
+
+    // Haal het hoogste aantal slagen voor alle zetten
+    mogelijkeZetten.forEach( zet =>  {
+      ikMoetSlaanAantal =  zet.geslagen.length > ikMoetSlaanAantal ? zet.geslagen.length : ikMoetSlaanAantal;
+    });
+
+    // filter alles er uit dat niet mag omdat er een 'betere' zet is.
+    mogelijkeZetten = mogelijkeZetten.filter( zet => zet.geslagen.length === ikMoetSlaanAantal);
+  
+    // attach mogelijke zetten aan huidige damstenen
+    mogelijkeZetten.forEach( zet => {
+      this[zet.kleur][zet.van].mogelijkeZetten.push(zet);
+    })
+
+    return mogelijkeZetten;
+  }
+
+  getSlaanZetten(zwarteStenen,witteStenen,beurt,vanaf,steenType,via,reedsGeslagen) {
+    let doorslaanZetten = [];
+    let stenen = {};
+    stenen.zwart = JSON.parse(JSON.stringify(zwarteStenen)); // Maak een copy om op te werken
+    stenen.wit = JSON.parse(JSON.stringify(witteStenen)); // Maak een copy om op te werken
+    let mijnReedsGeslagen = reedsGeslagen.slice(); // Maak een copy om op te werken
+    let mijnVia = via.slice(); // Maak een copy om op te werken
+    // haal de reedsGeslagen uit de gekregen lijst van stenen
+    mijnReedsGeslagen.forEach( geslagen => { 
+      delete stenen.zwart[geslagen];
+      delete stenen.wit[geslagen];
+    });
+
+    if (steenType === 'normaal') {
+      // slaan kan altijd naar voren of achter
+      const richtingen = [0,1,2,3];
+      richtingen.forEach( richting => {
+        let slaanOp = bordBewegingen[vanaf][richting];
+        if (slaanOp) {
+          let naar = bordBewegingen[bordBewegingen[vanaf][richting]][richting];
+          if ( naar !== 0 && stenen.zwart[naar] === undefined && stenen.wit[naar] === undefined && stenen[tegenKleur[beurt]][slaanOp] ) {
+            // Er staat een steen van de tegenstander op slaanOp
+            // en naar is vrij
+            mijnReedsGeslagen.push(slaanOp);
+            mijnVia.push(vanaf);
+            let doorslaan = this.getSlaanZetten( stenen.zwart, stenen.wit, beurt, naar, steenType, mijnVia, mijnReedsGeslagen );
+            doorslaan.forEach( zet => {
+              const doorslagVia = zet.via;
+              const doorslagGeslagen = zet.geslagen;
+              let mijnZet = new DamSteenZet(undefined, beurt, vanaf, doorslagVia, zet.naar, doorslagGeslagen );
+              doorslaanZetten.push(mijnZet);
+            });
+            if (doorslaan.length === 0) {
+              // er is niks om door te slaan dus wordt het alleen deze.
+              let mijnZet = new DamSteenZet(undefined, beurt, vanaf, mijnVia, naar, mijnReedsGeslagen )
+              doorslaanZetten.push(mijnZet);
+            }
+          }
+        }
+      });
+    }
+    return doorslaanZetten;
+  }
+
+}
+
+class Bord {
+  constructor() {
+    this.bordBewegingen = bordBewegingen;
+  }
+
+  redraw(stand) {
+    for( let i = 1; i <= 50; i++){
+      this.highlight(i,'geen');
+      if ( stand.zwart[i] ) {
+      // zwarte steen ?
+        document.getElementById('veld'+i).innerHTML = `<sup>${i}</sup><span alt="zwart" onmouseout="game.verbergMogelijkeZetten(${i});" onmouseover="game.toonMogelijkeZetten(${i});">&#9679;</span>`;
+      } else if ( stand.wit[i] ) {
+      // witte steen ?
+        document.getElementById('veld'+i).innerHTML = `<sup>${i}</sup><span alt="wit" onmouseout="game.verbergMogelijkeZetten(${i});" onmouseover="game.toonMogelijkeZetten(${i});">&#9675;</span>`;
+      } else {
+      // leeg ?
+        document.getElementById('veld'+i).innerHTML = `<sup>${i}</sup>`;
+      }
+    }
+    document.getElementById('beurt').innerHTML = stand.beurt.charAt(0).toUpperCase() + stand.beurt.slice(1);
+    document.getElementById('scorewit').innerHTML = 'Wit: '+ stand.scoreWit;
+    document.getElementById('scorezwart').innerHTML = 'Zwart: '+ stand.scoreZwart;
+  }
+
+  highlight(veld,type) {
+    document.getElementById('veld'+veld).style.backgroundColor = highlightKleur[type];
+  }
+
+}
+
+
+class Damspel {
+  constructor() {
+      this.bord = new Bord();
+      this.stand = new Stand();
+      this.clickStatus = 0;
+  }
+
+  init() {
+      this.stand.init();
+      this.clickStatus = 0;
+      this.bord.redraw(this.stand);
+  }
+
+  reset() {
+    this.init();
+  }
+
+  toonMogelijkeZetten(veld) {
+    if (this.clickStatus === 0 ) {
+      if ( this.stand[this.stand.beurt][veld] ){
+        this.stand[this.stand.beurt][veld].mogelijkeZetten.forEach( zet => {
+          zet.via.forEach( via => {
+            this.bord.highlight(via,'via')
+          });
+          zet.geslagen.forEach( geslagen => {
+            this.bord.highlight(geslagen,'geslagen')
+          });
+          this.bord.highlight(zet.van,'van');
+          this.bord.highlight(zet.naar,'naar');
+        });
+      }
+    }
+  }
+
+  verbergMogelijkeZetten(veld) {
+    if (this.clickStatus === 0 ) {
+      for(let i=1; i <= 50; i++) {
+        this.bord.highlight(i,'geen');
+      }
+    }
+  }
+
+  toonMogelijkeVervolgClick(veld) {
+    this.stand[this.stand.beurt][veld].mogelijkeZetten.forEach( zet => {
+      this.bord.highlight(zet.naar,'click');
+      }
+    )
+  }
+
+  clickOpVeld(veld) {
+    let mogelijkeGevondenZetten = [];
+    // nog niks geselecteerd en je clicked op een veld waar een van de mogelijke zetten is
+    if ( this.clickStatus === 0 && this.stand[this.stand.beurt][veld].mogelijkeZetten.length > 0 ) {
+      this.clickStatus = veld;
+      this.toonMogelijkeVervolgClick(veld);
+    } else {
+      this.stand[this.stand.beurt][this.clickStatus].mogelijkeZetten.forEach( zet => {
+        if (veld === zet.naar) {
+          mogelijkeGevondenZetten.push(zet);
+        }
+      });
+      // Al wel iets geselecteerd en nu op iets geclicked dat niet kan
+      if (mogelijkeGevondenZetten.length === 0 ) {
+        this.clickStatus = 0;
+        this.verbergMogelijkeZetten();
+      } else {
+        // Al wel iets geselecteerd maar nu op iets geclicked dat niet kan
+        // zetuitvoeren
+        this.zetUitvoeren(mogelijkeGevondenZetten[0]);
+        this.clickStatus = 0;
+        // als er meer zijn dan ...
+        // of de via vakjes doen
+      }
+
+    }
+    // geen bubling
+    return false;
+  }
+
+  zetUitvoeren(zet) {
+    this.stand.zetUitvoeren(zet);
+    this.bord.redraw(this.stand);
+  } 
+
+};
+
+
+const game = new Damspel();
+
+</script>
+
+<style>
+
+    body {
+      font-family: Verdana;
+      margin: 0;
+      padding: 0;
+    }
+
+    #header {
+      position: absolute;
+      width: 100%;
+      height: 23px;
+      border-bottom: 2px solid salmon;
+    }
+
+    #footer {
+      position: absolute;
+      width: 100%;
+      height: 23px;
+      bottom: 0px;
+      text-align: center;
+      font-size: .5em;
+      border-top: 2px solid salmon;
+    }
+
+    #hetspel {
+      width: 100%;
+      height: calc(100% - 50px);
+      position: absolute;
+      top: 25px;
+    }
+
+    #linkerkolom {
+      position: absolute;
+      left: 0px;
+      min-width: 540;
+      height: 90%;
+      background-color: rgba(211, 211, 211, 0.612);
+      padding: 20px;
+    }
+
+    #rechterkolom {
+      position: absolute;
+      right: 0px;
+      width: 33%;
+      height: 90%;
+      background-color: rgba(211, 211, 211, 0.331);
+      padding: 20px;
+    }
+
+    #stand {
+      padding-top: 20px;
+      padding-bottom: 20px;
+    }
+
+    #besturing {
+      border-top: 2px solid salmon;
+      padding-top: 20px;
+    }
+
+    #bord {
+      font-size: 60px;
+      line-height: 50px;
+      text-align: center;
+    }
+
+    sup {
+      font-size: .1em;
+    }
+
+    .wit {
+      margin: 0px;
+      padding: 0px;
+      width: 50px;
+      height: 50px;
+      border: 1px solid black;
+      background-color: white;
+      float: left;
+    } 
+
+    .zwart {
+      margin: 0px;
+      padding: 0px;
+      width: 50px;
+      height: 50px;
+      border: 1px solid black;
+      float: left;
+      background-color: lightgrey;
+    }
+    .rij {
+      border: 1px solid green;
+      width: 520px;
+      height: 50px;
+    }
+</style>
+
+<body onload="game.init();">
+<div id="header">
+</div>
+
+<div id="hetspel">
+    <div id="linkerkolom">
+    
+        <div id="bord">
+            <div id="rij1" class="rij">
+                <div id="veld" class="wit"></div>
+                <div id="veld1" class="zwart" onclick="game.clickOpVeld(1);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld2" class="zwart" onclick="game.clickOpVeld(2);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld3" class="zwart" onclick="game.clickOpVeld(3);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld4" class="zwart" onclick="game.clickOpVeld(4);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld5" class="zwart" onclick="game.clickOpVeld(5);"></div>
+            </div>
+            <div id="rij2" class="rij">
+                <div id="veld6" class="zwart" onclick="game.clickOpVeld(6);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld7" class="zwart" onclick="game.clickOpVeld(7);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld8" class="zwart" onclick="game.clickOpVeld(8);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld9" class="zwart" onclick="game.clickOpVeld(9);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld10" class="zwart" onclick="game.clickOpVeld(10);"></div>
+                <div id="veld" class="wit"></div>
+            </div>
+            <div id="rij3" class="rij">
+                <div id="veld" class="wit"></div>
+                <div id="veld11" class="zwart" onclick="game.clickOpVeld(11);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld12" class="zwart" onclick="game.clickOpVeld(12);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld13" class="zwart" onclick="game.clickOpVeld(13);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld14" class="zwart" onclick="game.clickOpVeld(14);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld15" class="zwart" onclick="game.clickOpVeld(15);"></div>
+            </div>
+            <div id="rij4" class="rij">
+                <div id="veld16" class="zwart" onclick="game.clickOpVeld(16);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld17" class="zwart" onclick="game.clickOpVeld(17);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld18" class="zwart" onclick="game.clickOpVeld(18);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld19" class="zwart" onclick="game.clickOpVeld(19);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld20" class="zwart" onclick="game.clickOpVeld(20);"></div>
+                <div id="veld" class="wit"></div>
+            </div>
+            <div id="rij5" class="rij">
+                <div id="veld" class="wit"></div>
+                <div id="veld21" class="zwart" onclick="game.clickOpVeld(21);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld22" class="zwart" onclick="game.clickOpVeld(22);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld23" class="zwart" onclick="game.clickOpVeld(23);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld24" class="zwart" onclick="game.clickOpVeld(24);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld25" class="zwart" onclick="game.clickOpVeld(25);"></div>
+            </div>
+            <div id="rij6" class="rij">
+                <div id="veld26" class="zwart" onclick="game.clickOpVeld(26);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld27" class="zwart" onclick="game.clickOpVeld(27);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld28" class="zwart" onclick="game.clickOpVeld(28);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld29" class="zwart" onclick="game.clickOpVeld(29);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld30" class="zwart" onclick="game.clickOpVeld(30);"></div>
+                <div id="veld" class="wit"></div>
+            </div>
+            <div id="rij7" class="rij">
+                <div id="veld" class="wit"></div>
+                <div id="veld31" class="zwart" onclick="game.clickOpVeld(31);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld32" class="zwart" onclick="game.clickOpVeld(32);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld33" class="zwart" onclick="game.clickOpVeld(33);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld34" class="zwart" onclick="game.clickOpVeld(34);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld35" class="zwart" onclick="game.clickOpVeld(35);"></div>
+            </div>
+            <div id="rij8" class="rij">
+                <div id="veld36" class="zwart" onclick="game.clickOpVeld(36);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld37" class="zwart" onclick="game.clickOpVeld(37);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld38" class="zwart" onclick="game.clickOpVeld(38);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld39" class="zwart" onclick="game.clickOpVeld(39);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld40" class="zwart" onclick="game.clickOpVeld(40);"></div>
+                <div id="veld" class="wit"></div>
+            </div>
+            <div id="rij9" class="rij">
+                <div id="veld" class="wit"></div>
+                <div id="veld41" class="zwart" onclick="game.clickOpVeld(41);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld42" class="zwart" onclick="game.clickOpVeld(42);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld43" class="zwart" onclick="game.clickOpVeld(43);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld44" class="zwart" onclick="game.clickOpVeld(44);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld45" class="zwart" onclick="game.clickOpVeld(45);"></div>
+            </div>
+            <div id="rij10" class="rij">
+                <div id="veld46" class="zwart" onclick="game.clickOpVeld(46);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld47" class="zwart" onclick="game.clickOpVeld(47);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld48" class="zwart" onclick="game.clickOpVeld(48);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld49" class="zwart" onclick="game.clickOpVeld(49);"></div>
+                <div id="veld" class="wit"></div>
+                <div id="veld50" class="zwart" onclick="game.clickOpVeld(50);"></div>
+                <div id="veld" class="wit"></div>
+            </div>
+        </div>
+    </div>
+    <div id="rechterkolom">
+        <div id="stand">
+          <span id="beurt"></span> is aan zet<br/>
+          <div id="scorewit"></div><div id="scorezwart"></div>
+        </div>
+        <div id="besturing">
+            Ga met de muis over de stenen om te zien welke zet ze kunnen doen.<br/>
+            Klik op een steen die je wilt zetten. De vakjes waar je heen kan met die steen worden groen. klik op een van die vakjes om de zet uit te voeren.<br/><br/>
+            <input type="button" value="Reset spel" name="buuton" onclick="game.reset();">
+        </div>
+    </div>
+</div>
+<div id="footer">
+  Assignment van Edwin Spaan voor bit-academy jan 2021
+</div>
+
+</body>
+</html>
