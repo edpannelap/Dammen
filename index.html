@@ -159,7 +159,6 @@ class Stand {
   
   getMogelijkeZetten() {
     let mogelijkeZetten=[];
-    let ikMoetSlaanAantal = 0;
     // Haal voor elke steen de mogelijke zetten op
     // Slaan is verplicht
     // Dubbel slag heeft prio
@@ -190,6 +189,7 @@ class Stand {
     };
 
     // Haal het hoogste aantal slagen voor alle zetten
+    let ikMoetSlaanAantal = 0;
     mogelijkeZetten.forEach( zet =>  {
       ikMoetSlaanAantal =  zet.geslagen.length > ikMoetSlaanAantal ? zet.geslagen.length : ikMoetSlaanAantal;
     });
